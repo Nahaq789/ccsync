@@ -23,14 +23,15 @@ func Normalize(data []byte, root string) []byte {
 		end := j + len(old)
 		out.Write(data[i:j])
 
-		if j == 0 || isPathChar(data[j-1]) {
+		justBefore := j == 0 || !isPathChar(data[j-1])
+		after := end == len(data) || !isPathChar(data[end])
+		if justBefore && after {
+			out.WriteString(Placeholder)
+		} else {
+			out.Write(old)
 		}
-
 		i = end
-
 	}
-
-	return bytes.ReplaceAll(data, []byte(root), []byte(Placeholder))
 }
 
 func Denormalize(data []byte, root string) []byte {
@@ -38,5 +39,15 @@ func Denormalize(data []byte, root string) []byte {
 }
 
 func isPathChar(b byte) bool {
-	return true
+	switch {
+	case b >= 'a' && b <= 'z':
+		return true
+	case b >= 'A' && b <= 'Z':
+		return true
+	case b >= '0' && b <= '9':
+		return true
+	case b == '.', b == '_', b == '-':
+		return true
+	}
+	return false
 }
