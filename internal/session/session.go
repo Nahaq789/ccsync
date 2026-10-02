@@ -26,14 +26,6 @@ func EncodePath(p string) string {
 	return out.String()
 }
 
-func ReadCwd(path string) (string, error) {
-	return "", nil
-}
-
-func Find(pDir, root string) ([]Session, error) {
-	return nil, nil
-}
-
 func isAlnum(b byte) bool {
 	switch {
 	case b >= 'a' && b <= 'z':
