@@ -29,9 +29,11 @@ func Find(pDir, root string) ([]Session, error) {
 			continue
 		}
 
-		a := ent.Name() == encoded
-		b := strings.HasPrefix(ent.Name(), encoded+"-")
-		if !a && !b {
+		// ディレクトリ名完全一致
+		exact := ent.Name() == encoded
+		// ディレクトリ名前方一致
+		prefixed := strings.HasPrefix(ent.Name(), encoded+"-")
+		if !exact && !prefixed {
 			continue
 		}
 
@@ -46,10 +48,16 @@ func Find(pDir, root string) ([]Session, error) {
 				continue
 			}
 
-			abPath := filepath.Join(dir, f.Name())
-			cwd, err := ReadCwd(abPath)
+			// jsonlのパス
+			path := filepath.Join(dir, f.Name())
+			cwd, err := ReadCwd(path)
 			if err != nil {
 				return nil, err
+			}
+
+			rel, ok := relCwd(cwd, root, exact)
+			if !ok {
+				continue
 			}
 
 			id := strings.TrimSuffix(f.Name(), ext)
@@ -58,38 +66,29 @@ func Find(pDir, root string) ([]Session, error) {
 				return nil, err
 			}
 
-			if cwd == root {
-				sessions = append(sessions, Session{
-					ID:      id,
-					Dir:     dir,
-					RelCwd:  ".",
-					ModTime: info.ModTime(),
-				})
-			}
-
-			if after, ok := strings.CutPrefix(cwd, root+"/"); ok {
-				relCwd := after
-				sessions = append(sessions, Session{
-					ID:      id,
-					Dir:     dir,
-					RelCwd:  relCwd,
-					ModTime: info.ModTime(),
-				})
-			}
-
-			if cwd == "" && a {
-				sessions = append(sessions, Session{
-					ID:      id,
-					Dir:     dir,
-					RelCwd:  ".",
-					ModTime: info.ModTime(),
-				})
-			}
-
+			sessions = append(sessions, Session{
+				ID:      id,
+				Dir:     dir,
+				RelCwd:  rel,
+				ModTime: info.ModTime(),
+			})
 		}
 	}
 	sort.Slice(sessions, func(i, j int) bool {
 		return sessions[i].ID < sessions[j].ID
 	})
 	return sessions, nil
+}
+
+func relCwd(cwd, root string, exact bool) (string, bool) {
+	if cwd == root {
+		return ".", true
+	}
+	if cwd == "" && exact {
+		return ".", true
+	}
+	if after, ok := strings.CutPrefix(cwd, root+"/"); ok {
+		return after, true
+	}
+	return "", false
 }
