@@ -3,7 +3,10 @@ package store
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -62,6 +65,35 @@ func Hash(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
 }
-func Write(storeDir, key string, meta Meta, data []byte) error
-func Read(storeDIr, key, id string) (Meta, []byte, error)
-func List(storeDir, key string) ([]Meta, error)
+func Write(storeDir, key string, meta Meta, data []byte) error {
+	if invalidID(meta.ID) {
+		return fmt.Errorf("セッションIDが不正です: %q", meta.ID)
+	}
+
+	dir := filepath.Join(storeDir, "repos", key, meta.ID)
+	jsonl := filepath.Join(dir, "session.jsonl")
+	metaJson := filepath.Join(dir, "meta.json")
+
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	if err := os.WriteFile(jsonl, data, 0o600); err != nil {
+		return err
+	}
+	mj, pErr := json.MarshalIndent(meta, "", "  ")
+	if pErr != nil {
+		return pErr
+	}
+	if err := os.WriteFile(metaJson, mj, 0o600); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// func Read(storeDir, key, id string) (Meta, []byte, error)
+// func List(storeDir, key string) ([]Meta, error)
+
+func invalidID(id string) bool {
+	return id == "" || id == "." || id == ".." || strings.Contains(id, "/")
+}
