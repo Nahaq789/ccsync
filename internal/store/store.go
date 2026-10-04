@@ -1,8 +1,11 @@
 package store
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func RepoKey(remoteURL string) (string, error) {
@@ -46,3 +49,19 @@ func RepoKey(remoteURL string) (string, error) {
 	}
 	return key, nil
 }
+
+type Meta struct {
+	ID        string    `json:"id"`
+	RelCwd    string    `json:"rel_cwd"`
+	Hash      string    `json:"hash"`
+	Machine   string    `json:"machine"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func Hash(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+func Write(storeDir, key string, meta Meta, data []byte) error
+func Read(storeDIr, key, id string) (Meta, []byte, error)
+func List(storeDir, key string) ([]Meta, error)
