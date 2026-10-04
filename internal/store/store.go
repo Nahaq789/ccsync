@@ -91,7 +91,26 @@ func Write(storeDir, key string, meta Meta, data []byte) error {
 	return nil
 }
 
-// func Read(storeDir, key, id string) (Meta, []byte, error)
+func Read(storeDir, key, id string) (Meta, []byte, error) {
+	if invalidID(id) {
+		return Meta{}, nil, fmt.Errorf("セッションIDが不正です: %q", id)
+	}
+
+	dir := filepath.Join(storeDir, "repos", key, id)
+	metaJson := filepath.Join(dir, "meta.json")
+
+	b, err := os.ReadFile(metaJson)
+	if err != nil {
+		return Meta{}, nil, err
+	}
+
+	var m Meta
+	if err := json.Unmarshal(b, &m); err != nil {
+		return Meta{}, nil, err
+	}
+	return Meta{}, nil, nil
+}
+
 // func List(storeDir, key string) ([]Meta, error)
 
 func invalidID(id string) bool {
