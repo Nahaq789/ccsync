@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -119,7 +121,40 @@ func Read(storeDir, key, id string) (Meta, []byte, error) {
 	return m, sj, nil
 }
 
-// func List(storeDir, key string) ([]Meta, error)
+func List(storeDir, key string) ([]Meta, error) {
+	const ext string = "jsonl"
+	pDir := filepath.Join(storeDir, "repos", key)
+	entries, err := os.ReadDir(pDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var metas []Meta
+	for _, ent := range entries {
+		// ファイルはスキップ
+		if !ent.IsDir() {
+			continue
+		}
+
+		dir := filepath.Join(pDir, ent.Name())
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range files {
+			if f.IsDir() || !strings.HasSuffix(f.Name(), ext) {
+				continue
+			}
+		}
+
+	}
+
+	return nil, nil
+}
 
 func invalidID(id string) bool {
 	return id == "" || id == "." || id == ".." || strings.Contains(id, "/")
