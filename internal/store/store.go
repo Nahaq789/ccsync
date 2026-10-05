@@ -98,17 +98,25 @@ func Read(storeDir, key, id string) (Meta, []byte, error) {
 
 	dir := filepath.Join(storeDir, "repos", key, id)
 	metaJson := filepath.Join(dir, "meta.json")
+	jsonl := filepath.Join(dir, "session.jsonl")
 
-	b, err := os.ReadFile(metaJson)
+	// meta.json
+	meta, err := os.ReadFile(metaJson)
+	if err != nil {
+		return Meta{}, nil, err
+	}
+	var m Meta
+	if err := json.Unmarshal(meta, &m); err != nil {
+		return Meta{}, nil, err
+	}
+
+	// session.jsonl
+	sj, err := os.ReadFile(jsonl)
 	if err != nil {
 		return Meta{}, nil, err
 	}
 
-	var m Meta
-	if err := json.Unmarshal(b, &m); err != nil {
-		return Meta{}, nil, err
-	}
-	return Meta{}, nil, nil
+	return m, sj, nil
 }
 
 // func List(storeDir, key string) ([]Meta, error)
