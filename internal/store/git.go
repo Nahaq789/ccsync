@@ -3,7 +3,9 @@ package store
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -23,4 +25,25 @@ func runGit(dir string, args ...string) (string, error) {
 	result := strings.TrimSpace(s)
 
 	return result, nil
+}
+
+func Clone(url, storeDir string) error {
+	parentDir := filepath.Dir(storeDir)
+	if err := os.MkdirAll(parentDir, 0o700); err != nil {
+		return err
+	}
+
+	// clone先が存在するか
+	path := filepath.Join(storeDir, ".git")
+	_, err := os.Stat(path)
+	if err != nil {
+
+		// 実際にcloneする
+		_, gitErr := runGit(parentDir, "clone", url, storeDir)
+		if gitErr != nil {
+			return gitErr
+		}
+	}
+	return nil
+
 }
