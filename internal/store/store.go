@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -102,13 +103,13 @@ func Read(storeDir, key, id string) (Meta, []byte, error) {
 	metaJson := filepath.Join(dir, "meta.json")
 	jsonl := filepath.Join(dir, "session.jsonl")
 
-	// meta.json
-	meta, err := os.ReadFile(metaJson)
+	// data.json
+	data, err := os.ReadFile(metaJson)
 	if err != nil {
 		return Meta{}, nil, err
 	}
 	var m Meta
-	if err := json.Unmarshal(meta, &m); err != nil {
+	if err := json.Unmarshal(data, &m); err != nil {
 		return Meta{}, nil, err
 	}
 
@@ -122,7 +123,6 @@ func Read(storeDir, key, id string) (Meta, []byte, error) {
 }
 
 func List(storeDir, key string) ([]Meta, error) {
-	const ext string = "jsonl"
 	pDir := filepath.Join(storeDir, "repos", key)
 	entries, err := os.ReadDir(pDir)
 	if err != nil {
@@ -134,26 +134,32 @@ func List(storeDir, key string) ([]Meta, error) {
 
 	var metas []Meta
 	for _, ent := range entries {
-		// ファイルはスキップ
 		if !ent.IsDir() {
 			continue
 		}
 
-		dir := filepath.Join(pDir, ent.Name())
-		files, err := os.ReadDir(dir)
+		path := filepath.Join(pDir, ent.Name(), "meta.json")
+		data, err := os.ReadFile(path)
 		if err != nil {
-			return nil, err
+			continue
+		}
+		var m Meta
+		if err := json.Unmarshal(data, &m); err != nil {
+			continue
 		}
 
-		for _, f := range files {
-			if f.IsDir() || !strings.HasSuffix(f.Name(), ext) {
-				continue
-			}
+		if ent.Name() != m.ID {
+			continue
 		}
 
+		metas = append(metas, m)
 	}
 
-	return nil, nil
+	sort.Slice(metas, func(i, j int) bool {
+		return metas[i].ID < metas[j].ID
+	})
+
+	return metas, nil
 }
 
 func invalidID(id string) bool {
