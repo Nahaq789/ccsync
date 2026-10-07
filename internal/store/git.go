@@ -47,3 +47,16 @@ func Clone(url, storeDir string) error {
 	return nil
 
 }
+
+func Update(storeDir string) error {
+	if _, err := runGit(storeDir, "fetch", "origin"); err != nil {
+		return err
+	}
+	if _, err := runGit(storeDir, "reset", "--hard", "@{upstream}"); err != nil {
+		return err
+	}
+	if _, err := runGit(storeDir, "clean", "-fd"); err != nil {
+		return err
+	}
+	return nil
+}
