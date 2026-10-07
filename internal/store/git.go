@@ -60,3 +60,27 @@ func Update(storeDir string) error {
 	}
 	return nil
 }
+
+func CommitPush(storeDir, message string) (bool, error) {
+	if _, err := runGit(storeDir, "add", "-A"); err != nil {
+		return false, err
+	}
+
+	m, err := runGit(storeDir, "status", "--porcelain")
+	if err != nil {
+		return false, err
+	}
+	if m == "" {
+		return false, nil
+	}
+
+	if _, err := runGit(storeDir, "commit", "-m", message); err != nil {
+		return false, err
+	}
+
+	if _, err := runGit(storeDir, "push"); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
