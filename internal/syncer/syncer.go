@@ -30,3 +30,8 @@ type Item struct {
 	Local  *session.Session
 	Remote *store.Meta
 }
+
+type Result struct {
+	Done      []string
+	Conflicts []string
+}
