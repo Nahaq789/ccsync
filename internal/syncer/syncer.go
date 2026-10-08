@@ -1,5 +1,10 @@
 package syncer
 
+import (
+	"github.com/Nahaq789/ccsync/internal/session"
+	"github.com/Nahaq789/ccsync/internal/store"
+)
+
 type Config struct {
 	ProjectsDir string
 	StoreDir    string
@@ -18,3 +23,10 @@ const (
 	StoreAhead
 	Conflict
 )
+
+type Item struct {
+	ID     string
+	State  State
+	Local  *session.Session
+	Remote *store.Meta
+}
