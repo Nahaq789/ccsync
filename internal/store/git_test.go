@@ -76,64 +76,6 @@ func writeFile(t *testing.T, p, content string) {
 	}
 }
 
-// ---------- runGit ----------
-
-func TestRunGit_標準出力を前後の空白なしで返す(t *testing.T) {
-	isolateGit(t)
-	dir := newClone(t, newRemote(t))
-	out, err := runGit(dir, "rev-parse", "--is-inside-work-tree")
-	if err != nil {
-		t.Fatalf("エラーにならないはず: %v", err)
-	}
-	if out != "true" {
-		t.Errorf("got %q, want %q", out, "true")
-	}
-}
-
-func TestRunGit_標準エラーの内容は戻り値に混ぜない(t *testing.T) {
-	isolateGit(t)
-	remote := newRemote(t)
-	// git clone は、成功しても「Cloning into ...」を標準エラーに出す。標準出力には何も出さない
-	out, err := runGit(t.TempDir(), "clone", remote, "x")
-	if err != nil {
-		t.Fatalf("エラーにならないはず: %v", err)
-	}
-	if out != "" {
-		t.Errorf("標準エラーの内容が混ざっている: %q", out)
-	}
-}
-
-func TestRunGit_失敗したらgitのメッセージを含むエラーを返す(t *testing.T) {
-	isolateGit(t)
-	out, err := runGit(t.TempDir(), "no-such-command")
-	if err == nil {
-		t.Fatal("エラーになるはず")
-	}
-	if out != "" {
-		t.Errorf("失敗したときの戻り値は空文字: %q", out)
-	}
-	if !strings.Contains(err.Error(), "is not a git command") {
-		t.Errorf("git が出したメッセージが、エラーに含まれていない: %v", err)
-	}
-	if !strings.Contains(err.Error(), "no-such-command") {
-		t.Errorf("実行したコマンドが、エラーに含まれていない: %v", err)
-	}
-}
-
-func TestRunGit_指定したディレクトリで実行する(t *testing.T) {
-	isolateGit(t)
-	dir := newClone(t, newRemote(t))
-	out, err := runGit(dir, "rev-parse", "--show-toplevel")
-	if err != nil {
-		t.Fatal(err)
-	}
-	want, _ := filepath.EvalSymlinks(dir)
-	got, _ := filepath.EvalSymlinks(out)
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
-}
-
 // ---------- Clone ----------
 
 func TestClone_親がなくてもstoreDirにcloneする(t *testing.T) {

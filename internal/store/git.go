@@ -1,31 +1,11 @@
 package store
 
 import (
-	"bytes"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/Nahaq789/ccsync/internal/gitcmd"
 )
-
-func runGit(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("Dir: %s, cmd: %s, stderr: %s, err: %w", dir, cmd.Args, strings.TrimSpace(stderr.String()), err)
-	}
-
-	s := stdout.String()
-	result := strings.TrimSpace(s)
-
-	return result, nil
-}
 
 func Clone(url, storeDir string) error {
 	parentDir := filepath.Dir(storeDir)
@@ -39,7 +19,7 @@ func Clone(url, storeDir string) error {
 	if err != nil {
 
 		// 実際にcloneする
-		_, gitErr := runGit(parentDir, "clone", url, storeDir)
+		_, gitErr := gitcmd.Run(parentDir, "clone", url, storeDir)
 		if gitErr != nil {
 			return gitErr
 		}
@@ -49,24 +29,24 @@ func Clone(url, storeDir string) error {
 }
 
 func Update(storeDir string) error {
-	if _, err := runGit(storeDir, "fetch", "origin"); err != nil {
+	if _, err := gitcmd.Run(storeDir, "fetch", "origin"); err != nil {
 		return err
 	}
-	if _, err := runGit(storeDir, "reset", "--hard", "@{upstream}"); err != nil {
+	if _, err := gitcmd.Run(storeDir, "reset", "--hard", "@{upstream}"); err != nil {
 		return err
 	}
-	if _, err := runGit(storeDir, "clean", "-fd"); err != nil {
+	if _, err := gitcmd.Run(storeDir, "clean", "-fd"); err != nil {
 		return err
 	}
 	return nil
 }
 
 func CommitPush(storeDir, message string) (bool, error) {
-	if _, err := runGit(storeDir, "add", "-A"); err != nil {
+	if _, err := gitcmd.Run(storeDir, "add", "-A"); err != nil {
 		return false, err
 	}
 
-	m, err := runGit(storeDir, "status", "--porcelain")
+	m, err := gitcmd.Run(storeDir, "status", "--porcelain")
 	if err != nil {
 		return false, err
 	}
@@ -74,11 +54,11 @@ func CommitPush(storeDir, message string) (bool, error) {
 		return false, nil
 	}
 
-	if _, err := runGit(storeDir, "commit", "-m", message); err != nil {
+	if _, err := gitcmd.Run(storeDir, "commit", "-m", message); err != nil {
 		return false, err
 	}
 
-	if _, err := runGit(storeDir, "push"); err != nil {
+	if _, err := gitcmd.Run(storeDir, "push"); err != nil {
 		return false, err
 	}
 
