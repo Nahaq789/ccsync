@@ -102,6 +102,38 @@ func runInit(args []string, home string, out io.Writer) error {
 }
 
 func runSync(cmd, home, cwd string, out io.Writer) error {
+	c, err := config.Load(filepath.Join(home, ".ccsync", "config.json"))
+	if err != nil {
+		return err
+	}
+	cfg, err := buildConfig(home, cwd, c)
+	if err != nil {
+		return err
+	}
+	if err := store.Clone(c.Remote, cfg.StoreDir); err != nil {
+		return err
+	}
+
+	if cmd == "push" {
+		r, err := syncer.Push(cfg)
+		if err != nil {
+			return err
+		}
+		return printResult(out, cmd, r)
+	}
+
+	if cmd == "pull" {
+		r, err := syncer.Pull(cfg)
+		if err != nil {
+			return err
+		}
+		return printResult(out, cmd, r)
+	}
+
+	if cmd == "status" {
+		return status(cfg, out)
+	}
+
 	return nil
 }
 
