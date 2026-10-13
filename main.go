@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -66,29 +67,38 @@ func buildConfig(home, cwd string, c config.Config) (syncer.Config, error) {
 
 func run(args []string, home, cwd string, out io.Writer) error {
 	if len(args) == 0 {
-		return nil // help
+		return errors.New("使い方: ccsync init --machine <名前> <リモートURL> | push | pull | status")
 	}
 	a := args[0]
 	if a == "init" {
-		if err := runInit(args[1:], home, out); err != nil {
-			return err
-		}
+		return runInit(args[1:], home, out)
 	}
 	if a == "push" || a == "pull" || a == "status" {
-		if err := runSync(a, home, cwd, out); err != nil {
-			return err
-		}
+		return runSync(a, home, cwd, out)
 	}
-
-	if _, err := fmt.Fprintln(out, "不明なコマンドです: %s", a); err != nil {
-		return err
-	}
-	return nil
+	return fmt.Errorf("不明なコマンドです: %s", a)
 }
 
 func runInit(args []string, home string, out io.Writer) error {
-	set := flag.NewFlagSet("init", flag.ContinueOnError)
-	return nil
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	machine := fs.String("machine", "", "このPCの名前")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() != 1 || *machine == "" {
+		return fmt.Errorf("使い方: ccsync init --machine <名前> <リモートURL>")
+	}
+
+	if err := store.Clone(fs.Arg(0), filepath.Join(home, ".ccsync", "store")); err != nil {
+		return err
+	}
+
+	if err := config.Save(filepath.Join(home, ".ccsync", "config.json"), config.Config{Remote: fs.Arg(0), Machine: *machine}); err != nil {
+		return err
+	}
+
+	_, m := fmt.Fprintf(out, "初期化しました: %s (%s)\n", *machine, fs.Arg(0))
+	return m
 }
 
 func runSync(cmd, home, cwd string, out io.Writer) error {
