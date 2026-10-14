@@ -163,9 +163,47 @@ func printResult(out io.Writer, cmd string, res syncer.Result) error {
 }
 
 func status(cfg syncer.Config, out io.Writer) error {
+	if err := store.Update(cfg.StoreDir); err != nil {
+		return err
+	}
+
+	items, err := syncer.Diff(cfg)
+	if err != nil {
+		return err
+	}
+
+	if _, err := fmt.Fprintf(out, "%s\n", cfg.Key); err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		if _, err := fmt.Fprintln(out, "  セッションはありません"); err != nil {
+			return err
+		}
+		return nil
+	}
+	for _, it := range items {
+		if _, err := fmt.Fprintf(out, "  %s %s\n", it.ID, stateLabel(it.State)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func stateLabel(s syncer.State) string {
-	return ""
+	switch s {
+	case syncer.Synced:
+		return "同期済み"
+	case syncer.LocalOnly:
+		return "手元だけ"
+	case syncer.StoreOnly:
+		return "ストアだけ"
+	case syncer.LocalAhead:
+		return "手元が新しい"
+	case syncer.StoreAhead:
+		return "ストアが新しい"
+	case syncer.Conflict:
+		return "競合"
+	default:
+		return ""
+	}
 }
