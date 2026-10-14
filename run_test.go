@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -109,6 +110,58 @@ func mustContain(t *testing.T, out string, wants ...string) {
 			t.Errorf("出力に %q が含まれていない\n出力:\n%s", w, out)
 		}
 	}
+}
+
+// isolateGit は、テスト中の git が、手元の設定(~/.gitconfig など)の影響を受けないようにする
+func isolateGit(t *testing.T) {
+	t.Helper()
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	t.Setenv("GIT_CONFIG_COUNT", "0")
+	t.Setenv("LC_ALL", "C")
+	t.Setenv("GIT_AUTHOR_NAME", "ccsync-test")
+	t.Setenv("GIT_AUTHOR_EMAIL", "test@example.com")
+	t.Setenv("GIT_COMMITTER_NAME", "ccsync-test")
+	t.Setenv("GIT_COMMITTER_EMAIL", "test@example.com")
+	t.Setenv("GIT_CEILING_DIRECTORIES", os.TempDir())
+}
+
+// gitRun は、テストの準備のために git を実行する(失敗したらテストを止める)
+func gitRun(t *testing.T, dir string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// tempDir は t.TempDir() を、シンボリックリンクを解決した形で返す
+// (macOS では /tmp が /private/tmp へのリンクで、git はリンクを解決したパスを返すため)
+func tempDir(t *testing.T) string {
+	t.Helper()
+	d, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+// newProject は、POB のような作業リポジトリを作る
+// 例: /tmp/.../pob(origin が設定済み、server/api ディレクトリあり)
+func newProject(t *testing.T, origin string) string {
+	t.Helper()
+	root := filepath.Join(tempDir(t), "pob")
+	if err := os.MkdirAll(filepath.Join(root, "server", "api"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "init", "-b", "main")
+	if origin != "" {
+		gitRun(t, root, "remote", "add", "origin", origin)
+	}
+	return root
 }
 
 // ---------- 引数 ----------

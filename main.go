@@ -32,7 +32,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ccsync:", err)
 		os.Exit(1)
 	}
-
 }
 
 func detectRepo(dir string) (root, key string, err error) {
@@ -145,7 +144,7 @@ func printResult(out io.Writer, cmd string, res syncer.Result) error {
 		}
 	}
 	if len(res.Done) >= 1 {
-		if _, err := fmt.Fprintf(out, "%s: %d 件 %s\n", cmd, len(res.Done), strings.Join(res.Done, ", ")); err != nil {
+		if _, err := fmt.Fprintf(out, "%s: %d件 %s\n", cmd, len(res.Done), strings.Join(res.Done, ", ")); err != nil {
 			return err
 		}
 	}
@@ -154,10 +153,10 @@ func printResult(out io.Writer, cmd string, res syncer.Result) error {
 		return nil
 	}
 	if len(res.Conflicts) >= 1 {
-		if _, err := fmt.Fprintf(out, "競合: %d 件(両方のPCで進んでいるため、スキップしました) %s\n", len(res.Conflicts), strings.Join(res.Conflicts, ", ")); err != nil {
+		if _, err := fmt.Fprintf(out, "競合: %d件(両方のPCで進んでいるため、スキップしました) %s\n", len(res.Conflicts), strings.Join(res.Conflicts, ", ")); err != nil {
 			return err
 		}
-		return fmt.Errorf("競合が %d 件あります", len(res.Conflicts))
+		return fmt.Errorf("競合が %d件あります", len(res.Conflicts))
 	}
 	return nil
 }
