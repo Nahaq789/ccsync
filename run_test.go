@@ -280,7 +280,7 @@ func TestSync_ストアが消えていてもcloneし直す(t *testing.T) {
 
 // ---------- push / pull ----------
 
-func TestPushPull_会社から自宅へ(t *testing.T) {
+func TestPushPull_PC_AからPC_Bへ(t *testing.T) {
 	isolateGit(t)
 	remote := newStoreRemote(t)
 	work, home := newPC(t), newPC(t)
@@ -299,7 +299,7 @@ func TestPushPull_会社から自宅へ(t *testing.T) {
 		t.Errorf("自宅のパスに書き換わっていない:\n%s", got)
 	}
 	if strings.Contains(got, work.root) {
-		t.Errorf("会社のパスが残っている:\n%s", got)
+		t.Errorf("PC-A のパスが残っている:\n%s", got)
 	}
 }
 
@@ -348,7 +348,7 @@ func TestPush_競合があればIDを表示してエラーにする(t *testing.T
 	home.mustCcsync("pull")
 
 	// 両方の PC で、同じセッションを別々に進めてしまった
-	work.talk("s1", "会社で続き")
+	work.talk("s1", "PC-Aで続き")
 	home.talk("s1", "自宅で続き")
 	home.talk("s2", "自宅で新しく始めた")
 	work.mustCcsync("push")
@@ -375,7 +375,7 @@ func TestPull_競合があればエラーにする(t *testing.T) {
 	work.talk("s1", "start")
 	work.mustCcsync("push")
 	home.mustCcsync("pull")
-	work.talk("s1", "会社で続き")
+	work.talk("s1", "PC-Aで続き")
 	home.talk("s1", "自宅で続き")
 	work.mustCcsync("push")
 
@@ -384,7 +384,7 @@ func TestPull_競合があればエラーにする(t *testing.T) {
 		t.Fatal("競合があるのでエラーになるべき")
 	}
 	mustContain(t, out, "競合", "s1")
-	if strings.Contains(home.read("s1"), "会社で続き") {
+	if strings.Contains(home.read("s1"), "PC-Aで続き") {
 		t.Error("競合したセッションを上書きしてはいけない")
 	}
 }
@@ -444,7 +444,7 @@ func TestStatus_競合があってもエラーにしない(t *testing.T) {
 	work.talk("s1", "start")
 	work.mustCcsync("push")
 	home.mustCcsync("pull")
-	work.talk("s1", "会社で続き")
+	work.talk("s1", "PC-Aで続き")
 	home.talk("s1", "自宅で続き")
 	work.mustCcsync("push")
 	if _, err := home.ccsync(home.root, "status"); err != nil {

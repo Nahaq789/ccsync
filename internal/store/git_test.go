@@ -305,14 +305,14 @@ func TestUpdate_cloneしていない場所ではエラーを返す(t *testing.T)
 
 // ---------- 一連の流れ ----------
 
-// 会社の PC で書いたセッションが、自宅の PC で一覧に出てきて、読める
+// PC-A で書いたセッションが、PC-B で一覧に出てきて、読める
 func TestGit_WriteからListまでの一連の流れ(t *testing.T) {
 	isolateGit(t)
 	remote := newRemote(t)
 	work := newClone(t, remote)
 	home := newClone(t, remote)
 
-	// 会社の PC: 書いて、送る
+	// PC-A: 書いて、送る
 	if err := Update(work); err != nil {
 		t.Fatal(err)
 	}
@@ -340,6 +340,6 @@ func TestGit_WriteからListまでの一連の流れ(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !sameMeta(meta, newMeta("s1")) || string(data) != string(testData) {
-		t.Error("自宅の PC で読んだ内容が、会社の PC で書いた内容と違う")
+		t.Error("PC-B で読んだ内容が、PC-A で書いた内容と違う")
 	}
 }

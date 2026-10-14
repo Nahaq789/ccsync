@@ -183,7 +183,7 @@ func TestPush_状態ごとの扱い(t *testing.T) {
 	putLocal(t, home, ".", "e-conflict", localBody(".", "a", "home"))
 	mustPush(t, home)
 
-	// 会社の PC の手元
+	// PC-A の手元
 	putLocal(t, work, ".", "a-local-only", localBody(".", "a"))
 	putLocal(t, work, ".", "b-synced", localBody(".", "a"))
 	putLocal(t, work, ".", "c-local-ahead", localBody(".", "a", "work"))
@@ -201,7 +201,7 @@ func TestPush_状態ごとの扱い(t *testing.T) {
 	// 送ったもの
 	_, data := readStore(t, remote, "c-local-ahead")
 	if !bytes.Contains(data, []byte("work")) {
-		t.Error("c-local-ahead が、会社の PC の内容になっていない")
+		t.Error("c-local-ahead が、PC-A の内容になっていない")
 	}
 	// 送らなかったもの(ストアの方が新しい、競合している)は、自宅の PC の内容のまま
 	for _, id := range []string{"d-store-ahead", "e-conflict"} {
@@ -240,7 +240,7 @@ func TestPush_最初に最新を取り込んでから送る(t *testing.T) {
 	putLocal(t, home, ".", "from-home", localBody(".", "a"))
 	mustPush(t, home)
 
-	// 会社の PC は、古いストアのまま Push を呼ぶ。Push の中で取り込むので、失敗しない
+	// PC-A は、古いストアのまま Push を呼ぶ。Push の中で取り込むので、失敗しない
 	putLocal(t, work, ".", "from-work", localBody(".", "b"))
 	res := mustPush(t, work)
 	if !sameIDs(res.Done, []string{"from-work"}) {
