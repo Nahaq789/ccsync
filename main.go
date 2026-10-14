@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Nahaq789/ccsync/internal/config"
 	"github.com/Nahaq789/ccsync/internal/gitcmd"
@@ -138,6 +139,26 @@ func runSync(cmd, home, cwd string, out io.Writer) error {
 }
 
 func printResult(out io.Writer, cmd string, res syncer.Result) error {
+	if len(res.Done) == 0 {
+		if _, err := fmt.Fprintf(out, "%s: 対象はありません\n", cmd); err != nil {
+			return err
+		}
+	}
+	if len(res.Done) >= 1 {
+		if _, err := fmt.Fprintf(out, "%s: %d 件 %s\n", cmd, len(res.Done), strings.Join(res.Done, ", ")); err != nil {
+			return err
+		}
+	}
+
+	if len(res.Conflicts) == 0 {
+		return nil
+	}
+	if len(res.Conflicts) >= 1 {
+		if _, err := fmt.Fprintf(out, "競合: %d 件(両方のPCで進んでいるため、スキップしました) %s\n", len(res.Conflicts), strings.Join(res.Conflicts, ", ")); err != nil {
+			return err
+		}
+		return fmt.Errorf("競合が %d 件あります", len(res.Conflicts))
+	}
 	return nil
 }
 
