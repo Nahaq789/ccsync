@@ -178,6 +178,39 @@ func TestRun_知らないコマンドはエラー(t *testing.T) {
 	}
 }
 
+// ---------- version ----------
+
+func TestRun_versionを表示する(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{"--version", []string{"--version"}},
+		{"version", []string{"version"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if err := run(tt.args, t.TempDir(), t.TempDir(), &buf); err != nil {
+				t.Fatalf("エラーになってはいけない: %v", err)
+			}
+			out := buf.String()
+			if !strings.HasPrefix(out, "ccsync ") {
+				t.Errorf("「ccsync 」で始まるべき: %q", out)
+			}
+			if !strings.HasSuffix(out, "\n") || strings.Count(out, "\n") != 1 {
+				t.Errorf("改行で終わる1行であるべき: %q", out)
+			}
+		})
+	}
+}
+
+func TestVersionLabel_空文字を返さない(t *testing.T) {
+	if versionLabel() == "" {
+		t.Error("空文字であってはいけない")
+	}
+}
+
 // ---------- init ----------
 
 func TestInit_設定を保存してストアをcloneする(t *testing.T) {
