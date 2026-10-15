@@ -29,7 +29,7 @@ claude --resume      # いつもの CLI で続きから
 ## インストール
 
 ```bash
-go install github.com/Nahaq789/ccsync@main
+go install github.com/Nahaq789/ccsync@latest
 ```
 
 `~/go/bin/ccsync` に入ります。`ccsync` が見つからない場合は、`~/go/bin` を PATH に追加してください(zsh なら `~/.zshrc`、bash なら `~/.bashrc`)。
@@ -39,6 +39,8 @@ export PATH="$HOME/go/bin:$PATH"
 ```
 
 Claude Code を動かしている環境と同じ側(WSL なら WSL の中)に入れてください。
+
+入ったバージョンは `ccsync --version` で確かめられます。
 
 ## セットアップ
 
@@ -72,8 +74,16 @@ ccsync init --machine home-pc git@github.com:Nahaq789/claude-sessions.git
 | `ccsync status` | 手元とストアの状態を一覧表示する(何も書き換えない) |
 | `ccsync push` | 手元の方が新しいセッションを、ストアに送る |
 | `ccsync pull` | ストアの方が新しいセッションを、手元に取り込む |
+| `ccsync --version`(`ccsync version` でも可) | インストールされている ccsync のバージョンを表示する |
 
 いずれも、最初に GitHub の最新を取り込んでから比べます。
+
+### version の表示
+
+```
+$ ccsync --version
+ccsync v1.1.0
+```
 
 ### status の表示
 

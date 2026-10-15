@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/Nahaq789/ccsync/internal/config"
@@ -67,7 +68,7 @@ func buildConfig(home, cwd string, c config.Config) (syncer.Config, error) {
 
 func run(args []string, home, cwd string, out io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("使い方: ccsync init --machine <名前> <リモートURL> | push | pull | status")
+		return errors.New("使い方: ccsync init --machine <名前> <リモートURL> | push | pull | status | version")
 	}
 	a := args[0]
 	if a == "init" {
@@ -75,6 +76,9 @@ func run(args []string, home, cwd string, out io.Writer) error {
 	}
 	if a == "push" || a == "pull" || a == "status" {
 		return runSync(a, home, cwd, out)
+	}
+	if a == "--version" || a == "version" {
+		return version(out)
 	}
 	return fmt.Errorf("不明なコマンドです: %s", a)
 }
@@ -205,4 +209,20 @@ func stateLabel(s syncer.State) string {
 	default:
 		return ""
 	}
+}
+
+func version(out io.Writer) error {
+	l := versionLabel()
+	if _, err := fmt.Fprintf(out, "ccsync %s\n", l); err != nil {
+		return err
+	}
+	return nil
+}
+
+func versionLabel() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "(devel)"
+	}
+	return info.Main.Version
 }
